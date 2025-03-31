@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --primary-color: #1d4ed8;
+  --secondary-color: #f59e0b;
+}
+
+@layer base {
+  h1 {
+    @apply text-3xl font-bold;
+  }
+}
+
+@layer components {
+  .btn {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+  }
+}
+
+@layer utilities {
+  .content-auto {
+    content-visibility: auto;
+  }
+}

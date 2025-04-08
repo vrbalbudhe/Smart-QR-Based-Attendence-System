@@ -43,6 +43,9 @@ const LoginForm: React.FC = () => {
         body: JSON.stringify({ email, password }),
       });
 
+      const responseData = await response.json();
+      console.log(responseData);
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Login failed");

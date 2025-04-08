@@ -3,17 +3,20 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const eventId = searchParams.get("eventId");
   const participantId = searchParams.get("participantId");
+  const action = searchParams.get("action");
 
-  if (!eventId || !participantId) {
-    return NextResponse.json({ error: "Invalid QR Code" }, { status: 400 });
+  if (!eventId || !participantId || !action) {
+    return NextResponse.json(
+      { error: "Missing required parameters" },
+      { status: 400 }
+    );
   }
 
   try {
-    // Check if participant exists
     const participant = await prisma.participants.findUnique({
       where: { id: participantId },
     });
@@ -25,27 +28,48 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Check if participant is already in the event
+    if (action === "reject") {
+      return NextResponse.json(
+        { message: "Invitation Rejected!" },
+        { status: 200 }
+      );
+    }
+
     const existingRegistration = await prisma.eventSession.findFirst({
       where: { eventId, participantId },
     });
 
     if (existingRegistration) {
-      return NextResponse.json({ message: "User already registered" });
+      return NextResponse.json(
+        { message: "User already registered" },
+        { status: 200 }
+      );
     }
 
-    // Add the participant to the event
+    const locationDetails = await prisma.locationDetails.create({
+      data: { Latitude: "0.0000", Longitude: "0.0000" },
+    });
+
+    const attendanceDetails = await prisma.attendenceDetails.create({
+      data: {
+        isAttended: false,
+        participantSelfie: "",
+        locationDetailsId: locationDetails.id,
+      },
+    });
+
     await prisma.eventSession.create({
       data: {
         eventId,
         participantId,
-        attendenceDetailsId: "", // Update with actual AttendenceDetails if needed
+        attendenceDetailsId: attendanceDetails.id,
       },
     });
 
-    return NextResponse.json({
-      message: "User successfully registered for the event",
-    });
+    return NextResponse.json(
+      { message: "✅ Registration Successful! Welcome to the event." },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Registration Error:", error);
     return NextResponse.json(

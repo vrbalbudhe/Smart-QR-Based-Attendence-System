@@ -3,12 +3,18 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { participantId: string } }
-) {
+export async function GET(req: NextRequest) {
   try {
-    const { participantId } = params;
+    const url = new URL(req.url);
+    const segments = url.pathname.split("/");
+    const participantId = segments[segments.indexOf("event") + 1];
+
+    if (!participantId) {
+      return NextResponse.json(
+        { message: "Participant ID not found in URL" },
+        { status: 400 }
+      );
+    }
 
     const events = await prisma.event.findMany({
       where: { creatorId: participantId },
@@ -18,8 +24,6 @@ export async function GET(
         EventSession: true,
       },
     });
-
-    console.log("Events created by participant:", events);
 
     if (events.length === 0) {
       return NextResponse.json(

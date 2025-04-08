@@ -12,7 +12,7 @@ interface Event {
   venue?: string;
   addQrCode: string;
   participants: string[];
-  EventSession:string[]
+  EventSession: string[];
 }
 
 export default function EventCard() {
@@ -47,13 +47,13 @@ export default function EventCard() {
     return <p className="text-center text-gray-500">No events found.</p>;
 
   return (
-    <div className="flex flex-col gap-10">
-      <div className="w-full min-h-10 flex justify-start items-center">
-        <p className="text-xl font-semibold pl-2 tracking-tight text-gray-700">
-          My Events
+    <div className="flex flex-col gap-8">
+      <div className="w-full min-h-10 flex pb-3 justify-start items-center">
+        <p className="text-2xl font-medium pl-2 -tracking-tight text-gray-700">
+          MY EVENTS
         </p>
       </div>
-      <div className="flex gap-5">
+      <div className="flex flex-wrap gap-5">
         {events.map((event, index) => (
           <EventCardDS
             key={index}

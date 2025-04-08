@@ -4,6 +4,7 @@ import { useAuth } from "@app/contexts/AuthContext";
 import { useState } from "react";
 import QRCodeViewer from "./QRCodeViewer";
 import { useRouter } from "next/navigation";
+import { BiLinkExternal } from "react-icons/bi";
 
 interface EventCardProps {
   id: string;
@@ -37,6 +38,7 @@ export default function EventCardDS({
         `/api/event/generateQr/addToEvent?eventId=${id}&participantId=${user?.id}&token=${process.env.NEXT_PUBLIC_QR_SECRET_KEY}`
       );
       const data = await response.json();
+      console.log("data ->", data);
       setQrCode(data.qrCode);
       if (response.ok) {
         setIsGenerating(false);
@@ -58,7 +60,9 @@ export default function EventCardDS({
             onClick={() => router.push(`/events/${id}`)}
             className="cursor-pointer"
           >
-            <p className="text-sm text-gray-700 font-medium">More Info</p>
+            <p className="text-sm text-gray-700 font-medium">
+              <BiLinkExternal />
+            </p>
           </div>
         </div>
         <p className="text-sm text-gray-600">{venue || "N/A"}</p>

@@ -8,7 +8,7 @@ export default function CreateEventForm() {
 
   const getCurrentDateTime = () => {
     const now = new Date();
-    return now.toISOString().slice(0, 16); // Format for input[type="datetime-local"]
+    return now.toISOString().slice(0, 16);
   };
 
   const [formData, setFormData] = useState({
@@ -20,7 +20,6 @@ export default function CreateEventForm() {
     creatorId: "",
   });
 
-  // Update creatorId when user data is available
   useEffect(() => {
     if (user?.id) {
       setFormData((prev) => ({ ...prev, creatorId: user.id }));
@@ -48,9 +47,6 @@ export default function CreateEventForm() {
         alert("User not authenticated. Please log in.");
         return;
       }
-
-      console.log("Submitting Event Data:", formData);
-
       const response = await fetch("/api/event/create", {
         method: "POST",
         headers: {
@@ -66,8 +62,6 @@ export default function CreateEventForm() {
       const result = await response.json();
       console.log("Event Created:", result);
       alert("Event Created Successfully!");
-
-      // Reset form after successful submission
       setFormData({
         name: "",
         from: getCurrentDateTime(),
@@ -94,7 +88,6 @@ export default function CreateEventForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Event Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Event Name

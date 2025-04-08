@@ -10,24 +10,24 @@ export default function NavigationBar() {
   console.log(user);
 
   return (
-    <nav className="bg-[#faf9f9] w-full py-4 fixed px-10 h-16 z-30 flex justify-center items-center">
+    <nav className="bg-[#faf9f9] border-b-2 shadow-md border-gray-300 w-full py-4 fixed px-10 h-16 z-30 flex justify-center items-center">
       <div className="w-[95%] mx-auto flex justify-between items-center">
         <div
           onClick={() => router.push("/")}
-          className="text-md cursor-pointer tracking-tight font-semibold text-gray-800"
+          className="text-lg cursor-pointer -tracking-tight font-medium text-gray-700"
         >
-          Event Check-In
+          Events Management
         </div>
         <div className="flex justify-center items-center gap-4">
           <Link
             href="/"
-            className="text-gray-800 hover:text-blue-500 text-sm -tracking-tight transition-colors"
+            className="text-gray-800 hover:text-blue-500 text-md -tracking-tight transition-colors"
           >
             Home
           </Link>
           <Link
             href="/events"
-            className="text-gray-800 hover:text-blue-500 text-sm -tracking-tight transition-colors"
+            className="text-gray-800 hover:text-blue-500 text-md -tracking-tight transition-colors"
           >
             Events
           </Link>

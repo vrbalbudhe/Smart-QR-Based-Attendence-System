@@ -1,17 +1,18 @@
 "use client";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import {
   Calendar,
-  Clock,
   MapPin,
-  Users,
-  ChevronLeft,
   Share2,
   QrCode,
   UserCheck,
+  Users2,
+  Link,
+  ArrowLeft,
+  Clipboard,
+  CheckCircle,
 } from "lucide-react";
-import EventSessionCard from "@app/components/Events/ParticipantsCard";
 
 interface EventCardProps {
   id: string;
@@ -28,6 +29,17 @@ interface EventCardProps {
     participant?: {
       id: string;
       name?: string;
+      email?: string;
+    };
+    AttendenceDetails: {
+      id: string;
+      isAttended: boolean;
+      participantSelfie: string;
+      locationDetailsId: string;
+      locationDetails: {
+        id: string;
+        location?: string;
+      };
     };
     participantId?: string;
     eventId?: string;
@@ -37,7 +49,7 @@ interface EventCardProps {
 interface EventSessionCardProps {
   id: string;
   attendenceDetailsId: string;
-  attendenceDetails: {
+  AttendenceDetails: {
     id: string;
     isAttended: boolean;
     participantSelfie: string;
@@ -50,7 +62,7 @@ interface EventSessionCardProps {
   participant?: {
     id: string;
     name?: string;
-    // Add other participant properties as needed
+    email?: string;
   };
   participantId?: string;
   event?: {
@@ -63,16 +75,17 @@ interface EventSessionCardProps {
     attendenceQrCode: string;
     participants: string[];
     EventSession: any[];
-    // Other event properties
   };
   eventId?: string;
 }
 
 export default function Page() {
   const params = useParams();
+  const router = useRouter();
   const [event, setEvent] = useState<EventCardProps | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("details");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -83,7 +96,6 @@ export default function Page() {
           throw new Error("Failed to fetch event details");
         }
         const data: EventCardProps = await response.json();
-        console.log(data);
         setEvent(data);
       } catch (error) {
         console.error("Error fetching event details:", error);
@@ -92,14 +104,20 @@ export default function Page() {
       }
     };
 
-    if (params.id) {
+    if (params?.id) {
       fetchEventDetails();
     }
-  }, [params.id]);
+  }, [params?.id]);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="w-20 h-20 border-4 border-t-blue-600 border-blue-100 rounded-full animate-spin mx-auto"></div>
           <p className="mt-6 text-gray-600 font-medium text-lg">
@@ -112,7 +130,7 @@ export default function Page() {
 
   if (!event) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
         <div className="bg-white p-10 rounded-2xl shadow-xl text-center max-w-md">
           <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <MapPin className="h-10 w-10 text-red-500" />
@@ -123,7 +141,10 @@ export default function Page() {
           <p className="text-gray-600 mb-6">
             The event you're looking for doesn't exist or has been removed.
           </p>
-          <button className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
+          <button
+            onClick={() => router.push("/events")}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
             Return to Events
           </button>
         </div>
@@ -133,207 +154,331 @@ export default function Page() {
 
   const formattedEventName = event.name.toUpperCase();
   const registeredCount = event?.EventSession?.length || 0;
-  const attendedCount = event?.EventSession?.length || 0;
+  const attendedCount =
+    event?.EventSession?.filter(
+      (session) => session.attendenceDetailsId && session.participant?.id
+    ).length || 0;
 
+  const registrationLink = `${process.env.NEXT_PUBLIC_BASE_URL}/scan/${params?.id}`;
   return (
-    <div className="min-h-screen w-full py-12 mt-24 px-4 sm:px-6 lg:px-8">
-      <div className=" w-full mx-auto">
-        <div className="mb-6">
-          <button className="flex items-center text-gray-600 hover:text-blue-600 transition-colors font-medium">
-            <ChevronLeft className="h-5 w-5 mr-1" />
-            Back to Events
-          </button>
+    <div className="min-h-screen w-full mt-14">
+      <div className="bg-white w-full">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16 items-center">
+            <div className="flex items-center">
+              <button
+                onClick={() => router.push("/events")}
+                className="flex items-center text-gray-500 hover:text-blue-600 transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                <span className="font-medium">Back to Events</span>
+              </button>
+            </div>
+            <div>
+              <button className="p-2 rounded-full text-gray-500 hover:text-blue-600 hover:bg-gray-100 transition-colors">
+                <Share2 className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div className="bg-white w-full border border-gray-100 overflow-hidden">
-          <div className="relative h-20 sm:h-28">
-            <div className="absolute inset-0 bg-opacity-20"></div>
-            <div className="absolute inset-0 flex items-center justify-between px-6 sm:px-12">
-              <h1 className="text-3xl sm:text-4xl font-semibold text-gray-700 tracking-tight">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white shadow-sm overflow-hidden">
+          {/* Event Header Banner */}
+          <div className="relative h-32 flex items-end">
+            <div className="absolute inset-0 bg-opacity-10 pattern-dots pattern-blue-500 pattern-bg-white pattern-size-4 pattern-opacity-20"></div>
+            <div className="px-8 py-6 w-full">
+              <h1 className="text-3xl font-semibold text-gray-700 tracking-tight">
                 {formattedEventName}
               </h1>
-              <div className="flex space-x-3">
-                <button className="p-3 bg-white bg-opacity-20 rounded-full text-white hover:bg-opacity-30 transition-colors">
-                  <Share2 className="h-5 w-5" />
+              <div className="mt-2 flex items-center">
+                <div className="h-3 w-3 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                <span className="text-sm font-medium text-gray-600">
+                  Active Event
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Content Tabs */}
+          <div className="border-b border-gray-200">
+            <div className="px-8">
+              <nav className="-mb-px flex space-x-8">
+                <button
+                  onClick={() => setActiveTab("details")}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === "details"
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  Event Details
                 </button>
-              </div>
+                <button
+                  onClick={() => setActiveTab("participants")}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === "participants"
+                      ? "border-blue-600 text-blue-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  Participants
+                </button>
+              </nav>
             </div>
           </div>
 
-          {/* Status Banner */}
-          <div className="bg-gray-50 px-8 sm:px-12 py-4 flex justify-between items-center border-b border-gray-100">
-            <div className="flex items-center">
-              <div className="h-3 w-3 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-              <span className="text-sm font-medium text-gray-700">
-                Event Active
-              </span>
-            </div>
-            <div className="flex items-center">
-              <button
-                className={`text-md rounded-lg select-none px-6 py-2.5 font-medium text-white transition-colors ${!event.attendenceQrCode ? "bg-blue-600 hover:bg-blue-700" : "bg-gray-500 hover:bg-gray-600"}`}
-                onClick={(e) => e.preventDefault()}
-              >
-                {!event.attendenceQrCode ? (
-                  <span className="flex items-center">
-                    <QrCode className="h-4 w-4 mr-2" />
-                    Generate Attendance QR
-                  </span>
-                ) : (
-                  <span className="flex items-center">
-                    <QrCode className="h-4 w-4 mr-2" />
-                    AQC Generated
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
+          {/* Main Content */}
+          {activeTab === "details" ? (
+            <div className="p-8">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Left column - Event info */}
+                <div className="lg:col-span-2">
+                  <h2 className="text-xl font-semibold text-gray-800 mb-6">
+                    Event Information
+                  </h2>
 
-          {/* Tabs */}
-          <div className="px-8 sm:px-12 pt-6 border-b border-gray-100">
-            <div className="flex space-x-8">
-              <button
-                className={`pb-4 font-medium text-base transition-colors ${activeTab === "details" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-800"}`}
-                onClick={() => setActiveTab("details")}
-              >
-                Event Details
-              </button>
-              <button
-                className={`pb-4 font-medium text-base transition-colors ${activeTab === "participants" ? "text-blue-600 border-b-2 border-blue-600" : "text-gray-500 hover:text-gray-800"}`}
-                onClick={() => setActiveTab("participants")}
-              >
-                Participants
-              </button>
-            </div>
-          </div>
-
-          <div className="p-8 sm:p-12">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-              {/* Left column - Event info */}
-              <div className="md:col-span-2 space-y-8">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-shadow">
-                    <div className="flex items-start space-x-4">
-                      <div className="bg-blue-100 p-3 rounded-lg">
-                        <MapPin className="h-6 w-6 text-blue-600" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Venue Card */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                      <div className="flex items-start space-x-4">
+                        <div className="bg-blue-50 p-3 rounded-lg">
+                          <MapPin className="h-6 w-6 text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                            Venue
+                          </h3>
+                          <p className="text-gray-800 font-medium mt-1">
+                            {event.venue}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                          VENUE
-                        </h3>
-                        <p className="text-gray-800 font-medium text-lg mt-1">
-                          {event.venue}
-                        </p>
+                    </div>
+
+                    {/* Date & Time Card */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                      <div className="flex items-start space-x-4">
+                        <div className="bg-indigo-50 p-3 rounded-lg">
+                          <Calendar className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                            Date & Time
+                          </h3>
+                          <p className="text-gray-800 font-medium mt-1">
+                            {event.from} - {event.to}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-shadow">
+                  {/* Registration Link */}
+                  <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
                     <div className="flex items-start space-x-4">
-                      <div className="bg-indigo-100 p-3 rounded-lg">
-                        <Calendar className="h-6 w-6 text-indigo-600" />
+                      <div className="bg-purple-50 p-3 rounded-lg">
+                        <Link className="h-6 w-6 text-purple-600" />
                       </div>
-                      <div>
+                      <div className="flex-grow">
                         <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
-                          DATE & TIME
+                          Event Registration Link
                         </h3>
-                        <p className="text-gray-800 font-medium text-lg mt-1">
-                          {event.from} - {event.to}
-                        </p>
+                        <div className="mt-2 flex items-center">
+                          <input
+                            type="text"
+                            value={registrationLink}
+                            readOnly
+                            className="flex-grow bg-gray-50 py-2 px-3 rounded text-sm text-gray-700 border border-gray-200"
+                          />
+                          <button
+                            onClick={() => copyToClipboard(registrationLink)}
+                            className="ml-2 p-2 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+                            title="Copy to clipboard"
+                          >
+                            {copied ? (
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                            ) : (
+                              <Clipboard className="h-5 w-5 text-gray-500" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <div className="flex-1 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 shadow-md">
-                    <div className="flex items-center justify-between text-white">
-                      <div>
-                        <p className="text-blue-100 text-sm font-medium uppercase tracking-wider">
-                          Registered
-                        </p>
-                        <p className="text-4xl font-bold mt-2">
+                {/* Right column - Stats & QR */}
+                <div className="lg:col-span-1">
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="p-6 border-b border-gray-100">
+                      <h2 className="text-xl font-semibold text-gray-800">
+                        Event Statistics
+                      </h2>
+                    </div>
+
+                    <div className="grid grid-cols-2 divide-x divide-gray-100">
+                      {/* Registered Stats */}
+                      <div className="p-6 text-center">
+                        <div className="inline-flex items-center justify-center w-12 h-12 bg-indigo-50 rounded-full mb-4">
+                          <Users2 className="h-6 w-6 text-indigo-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-gray-800">
                           {registeredCount}
-                        </p>
+                        </div>
+                        <div className="text-sm font-medium text-gray-500 mt-1">
+                          Participants
+                        </div>
                       </div>
-                      <div className="bg-white bg-opacity-20 p-4 rounded-lg">
-                        <Users className="h-8 w-8 text-white" />
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="flex-1 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-6 shadow-md">
-                    <div className="flex items-center justify-between text-white">
-                      <div>
-                        <p className="text-emerald-100 text-sm font-medium uppercase tracking-wider">
-                          Attended
-                        </p>
-                        <p className="text-4xl font-bold mt-2">
+                      {/* Attended Stats */}
+                      <div className="p-6 text-center">
+                        <div className="inline-flex items-center justify-center w-12 h-12 bg-emerald-50 rounded-full mb-4">
+                          <UserCheck className="h-6 w-6 text-emerald-600" />
+                        </div>
+                        <div className="text-3xl font-bold text-gray-800">
                           {attendedCount}
-                        </p>
+                        </div>
+                        <div className="text-sm font-medium text-gray-500 mt-1">
+                          Attended
+                        </div>
                       </div>
-                      <div className="bg-white bg-opacity-20 p-4 rounded-lg">
-                        <UserCheck className="h-8 w-8 text-white" />
+                    </div>
+
+                    {/* QR Code Section */}
+                    <div className="p-6 border-t border-gray-100">
+                      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                        Registration QR
+                      </h3>
+                      <div className="bg-white p-2 border border-gray-200 rounded-lg inline-block">
+                        <img
+                          src={event.addQrCode}
+                          alt="Event QR Code"
+                          className="h-48 w-48 object-contain"
+                        />
                       </div>
+                    </div>
+
+                    {/* Attendance QR Button */}
+                    <div className="p-6 border-t border-gray-100">
+                      <button
+                        className={`w-full rounded-lg py-3 px-4 font-medium text-white transition-colors ${
+                          !event.attendenceQrCode
+                            ? "bg-blue-600 hover:bg-blue-700"
+                            : "bg-gray-500 hover:bg-gray-600"
+                        }`}
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <span className="flex items-center justify-center">
+                          <QrCode className="h-4 w-4 mr-2" />
+                          {!event.attendenceQrCode
+                            ? "Generate Attendance QR"
+                            : "AQC Generated"}
+                        </span>
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Right column - QR code */}
-              <div className="flex flex-col items-center">
-                <div className="bg-white p-6 border border-gray-100 w-full max-w-xs">
-                  <div className="text-left">
-                    <h3 className="text-2xl font-medium text-gray-700">
-                      Event Registration
-                    </h3>
-                    <p className="text-gray-500 text-sm">Scan to join</p>
-                  </div>
-                  <div className="">
-                    <img
-                      src={event.addQrCode}
-                      alt="Event QR Code"
-                      className="w-full h-auto object-contain"
-                    />
-                  </div>
+            </div>
+          ) : (
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Participants List
+                </h2>
+                <div className="text-sm text-gray-500">
+                  Total: <span className="font-medium">{registeredCount}</span>
                 </div>
               </div>
-            </div>
-          </div>
 
-          <div className="w-full pl-14 pr-14 min-h-screen">
-            <div className="text-left mb-4">
-              <h3 className="text-4xl font-medium text-gray-700">
-                Participants
-              </h3>
-              <p className="text-gray-500 text-sm">Scroll to view</p>
+              {/* Participants Table */}
+              <div className="bg-white overflow-hidden border border-gray-200 sm:rounded-lg shadow-sm">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        #
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Session ID
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Email ID
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Status
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {event.EventSession.map((session, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {index + 1}
+                        </td>
+                        <td
+                          onClick={() =>
+                            router.push(`/events/${params?.id}/${session?.id}`)
+                          }
+                          className="px-6 py-4 whitespace-nowrap text-sm hover:text-blue-600 hover:underline cursor-pointer select-none font-medium text-gray-900"
+                        >
+                          {session.id.slice(20, 25)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap -tracking-tight text-sm text-gray-700">
+                          {session?.participant?.email || "—"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${session?.AttendenceDetails?.locationDetails ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}
+                          >
+                            {session?.AttendenceDetails?.locationDetails ? (
+                              <p>Attended</p>
+                            ) : (
+                              <p className="">Registered</p>
+                            )}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap -tracking-tight text-sm text-gray-700">
+                          <button className="px-2 py-2 rounded-md bg-gray-700 text-white hover:text-blue-500">Mark Attendance</button>
+                        </td>
+                      </tr>
+                    ))}
+                    {event.EventSession.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={5}
+                          className="px-6 py-10 text-center text-sm text-gray-500"
+                        >
+                          No participants have registered for this event yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            {event.EventSession.map((session, index) => (
-              <EventSessionCard
-                key={session.id || index}
-                id={session.id || `session-${index}`}
-                // Don't pass attendenceDetails directly since it's undefined
-                // Instead, fetch it or modify your API to include it
-                attendenceDetailsId={session.attendenceDetailsId}
-                // Create a default or fetch the actual data
-                attendenceDetails={{
-                  id: session.attendenceDetailsId || "",
-                  isAttended: false, // Default value
-                  participantSelfie: "", // Default value
-                  locationDetailsId: "",
-                  locationDetails: { id: "", location: "" },
-                }}
-                participant={session.participant}
-                participantId={session.participantId}
-                event={event}
-                eventId={session.eventId}
-              />
-            ))}
-          </div>
-
-          <div className="bg-gray-800 px-8 py-4 flex justify-between items-center">
-            <p className="text-sm text-gray-400">Created on March 31, 2025</p>
-            <p className="text-sm text-white font-mono">EID: {event.id}</p>
-          </div>
+          )}
         </div>
       </div>
     </div>

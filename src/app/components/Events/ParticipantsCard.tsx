@@ -2,17 +2,17 @@ import React from "react";
 
 interface Participants {
   id: string;
-  name?: string; // Adding a common field for display
+  name?: string;
 }
 
 interface Event {
   id: string;
-  name?: string; // Adding a common field for display
+  name?: string;
 }
 
 interface LocationDetails {
   id: string;
-  location?: string; // Assuming location has a descriptive field
+  location?: string;
 }
 
 interface AttendenceDetails {
@@ -20,13 +20,13 @@ interface AttendenceDetails {
   isAttended: boolean;
   participantSelfie: string;
   locationDetailsId: string;
-  locationDetails: LocationDetails;
+  locationDetails?: LocationDetails;
 }
 
 interface EventSessionProps {
   id: string;
   attendenceDetailsId: string;
-  attendenceDetails: AttendenceDetails;
+  attendenceDetails?: AttendenceDetails;
   participant?: Participants;
   participantId?: string;
   event?: Event;
@@ -34,26 +34,32 @@ interface EventSessionProps {
 }
 
 export default function EventSessionCard({
-  id,
   attendenceDetails,
   participant,
   event,
 }: EventSessionProps) {
-  const attendanceStatus = attendenceDetails.isAttended
+
+  console.log(attendenceDetails)
+  console.log(participant)
+  console.log(event)
+  const attendanceStatus = attendenceDetails?.isAttended
     ? "Attended"
     : "Not Attended";
 
   return (
     <div className="rounded-lg border border-gray-300 shadow-sm p-4 w-full">
       <div className="flex items-center gap-4">
-        {/* Participant Selfie */}
         <div className="h-16 w-16 rounded-full overflow-hidden bg-gray-200">
-          {attendenceDetails.participantSelfie && (
+          {attendenceDetails?.participantSelfie ? (
             <img
               src={attendenceDetails.participantSelfie}
               alt="Participant Selfie"
               className="h-full w-full object-cover"
             />
+          ) : (
+            <span className="text-gray-500 flex items-center justify-center h-full">
+              No Image
+            </span>
           )}
         </div>
 
@@ -65,7 +71,7 @@ export default function EventSessionCard({
         </div>
         <div
           className={`px-3 py-1 rounded-full text-sm font-medium ${
-            attendenceDetails.isAttended
+            attendenceDetails?.isAttended
               ? "bg-green-100 text-green-800"
               : "bg-red-100 text-red-800"
           }`}

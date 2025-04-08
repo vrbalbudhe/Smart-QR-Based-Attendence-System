@@ -3,19 +3,25 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params;
-
+export async function GET(req: NextRequest) {
   try {
+    const url = new URL(req.url);
+    const pathSegments = url.pathname.split("/");
+    const id = pathSegments[pathSegments.length - 1];
+    // console.log("this is id -> ", id);
+
     const event = await prisma.event.findUnique({
       where: { id },
       include: {
         LocationDetails: true,
         participants: true,
-        EventSession: true,
+        EventSession: {
+          include: {
+            participant: true,
+            Event: true,
+            AttendenceDetails: true,
+          },
+        },
       },
     });
 

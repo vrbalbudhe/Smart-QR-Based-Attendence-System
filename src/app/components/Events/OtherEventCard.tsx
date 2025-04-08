@@ -59,6 +59,9 @@ export default function OtherEventCard() {
             venue={event.venue || "NA"}
             from={event.from}
             to={event.to}
+            addQrCode={""}
+            participants={[]}
+            EventSession={[]}
           />
         ))}
       </div>

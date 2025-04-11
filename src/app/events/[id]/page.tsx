@@ -13,13 +13,14 @@ import {
   Clipboard,
   CheckCircle,
 } from "lucide-react";
-
+import { useAuth } from "@app/contexts/AuthContext";
 interface EventCardProps {
   id: string;
   name: string;
   venue: string;
   from: string;
   to: string;
+  creatorId: string;
   addQrCode: string;
   attendenceQrCode: string;
   participants: string[];
@@ -78,14 +79,15 @@ interface EventSessionCardProps {
   };
   eventId?: string;
 }
-
 export default function Page() {
   const params = useParams();
   const router = useRouter();
   const [event, setEvent] = useState<EventCardProps | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("details");
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [qrGenerated, setQrGenerated] = useState(!!event?.attendenceQrCode);
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchEventDetails = async () => {
@@ -103,17 +105,45 @@ export default function Page() {
         setLoading(false);
       }
     };
-
     if (params?.id) {
       fetchEventDetails();
     }
-  }, [params?.id]);
+  }, []);
+
+  const handleGenerateQR = async () => {
+    if (qrGenerated || loading) return;
+
+    setLoading(true);
+
+    try {
+      const res = await fetch(`/api/event/generateQr/attendenceQr/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ eventId: params?.id }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setQrGenerated(true);
+      } else {
+        alert(data.error || "Failed to generate QR");
+      }
+    } catch (err) {
+      alert("Something went wrong");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+  const eventId = (params?.id as string) ?? "";
 
   if (loading) {
     return (
@@ -130,8 +160,8 @@ export default function Page() {
 
   if (!event) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="bg-white p-10 rounded-2xl shadow-xl text-center max-w-md">
+      <div className="min-h-screen w-full flex items-center justify-center">
+        <div className="bg-white p-10 text-center max-w-md">
           <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
             <MapPin className="h-10 w-10 text-red-500" />
           </div>
@@ -156,10 +186,34 @@ export default function Page() {
   const registeredCount = event?.EventSession?.length || 0;
   const attendedCount =
     event?.EventSession?.filter(
-      (session) => session.attendenceDetailsId && session.participant?.id
+      (session) => session.AttendenceDetails.isAttended == true
     ).length || 0;
 
+  const from = event?.from ? Date.parse(event.from) : 0;
+  const to = event?.to ? Date.parse(event.to) : 0;
+  const now = Date.now();
+
+  const isActive = now >= from && now <= to;
+  const downloadAttendanceExcel = async (eventId: string) => {
+    const res = await fetch(`/api/event/export/${eventId}`, {
+      method: "GET",
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to generate or download Excel");
+    }
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `event-${eventId}-attendance.xlsx`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   const registrationLink = `${process.env.NEXT_PUBLIC_BASE_URL}/scan/${params?.id}`;
+  const attendenceLink = `${process.env.NEXT_PUBLIC_BASE_URL}/confirmAttendence/${params?.id}`;
   return (
     <div className="min-h-screen w-full mt-14">
       <div className="bg-white w-full">
@@ -193,9 +247,13 @@ export default function Page() {
                 {formattedEventName}
               </h1>
               <div className="mt-2 flex items-center">
-                <div className="h-3 w-3 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                <div
+                  className={`h-5 w-5 rounded-full mr-2 ${
+                    isActive ? "bg-green-400 animate-pulse" : "bg-red-400"
+                  }`}
+                ></div>
                 <span className="text-sm font-medium text-gray-600">
-                  Active Event
+                  {isActive ? "Active Event" : "Closed Event"}
                 </span>
               </div>
             </div>
@@ -307,6 +365,48 @@ export default function Page() {
                       </div>
                     </div>
                   </div>
+                  <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+                    <div className="flex items-start space-x-4">
+                      <div className="bg-purple-50 p-3 rounded-lg">
+                        <Link className="h-6 w-6 text-purple-600" />
+                      </div>
+                      <div className="flex-grow">
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                          Event Attendence Link
+                        </h3>
+                        <div className="mt-2 flex items-center">
+                          <input
+                            type="text"
+                            value={attendenceLink}
+                            readOnly
+                            className="flex-grow bg-gray-50 py-2 px-3 rounded text-sm text-gray-700 border border-gray-200"
+                          />
+                          <button
+                            onClick={() => copyToClipboard(attendenceLink)}
+                            className="ml-2 p-2 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+                            title="Copy to clipboard"
+                          >
+                            {copied ? (
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                            ) : (
+                              <Clipboard className="h-5 w-5 text-gray-500" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {user?.id === event?.creatorId && (
+                    <button
+                      onClick={() =>
+                        params?.id && downloadAttendanceExcel(eventId)
+                      }
+                      className="bg-blue-500 ml-5 mt-5 text-white px-4 py-2 rounded"
+                    >
+                      Download Attendance
+                    </button>
+                  )}
                 </div>
 
                 {/* Right column - Stats & QR */}
@@ -317,7 +417,6 @@ export default function Page() {
                         Event Statistics
                       </h2>
                     </div>
-
                     <div className="grid grid-cols-2 divide-x divide-gray-100">
                       {/* Registered Stats */}
                       <div className="p-6 text-center">
@@ -345,8 +444,6 @@ export default function Page() {
                         </div>
                       </div>
                     </div>
-
-                    {/* QR Code Section */}
                     <div className="p-6 border-t border-gray-100">
                       <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
                         Registration QR
@@ -360,23 +457,47 @@ export default function Page() {
                       </div>
                     </div>
 
-                    {/* Attendance QR Button */}
-                    <div className="p-6 border-t border-gray-100">
-                      <button
-                        className={`w-full rounded-lg py-3 px-4 font-medium text-white transition-colors ${
-                          !event.attendenceQrCode
-                            ? "bg-blue-600 hover:bg-blue-700"
-                            : "bg-gray-500 hover:bg-gray-600"
-                        }`}
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <span className="flex items-center justify-center">
-                          <QrCode className="h-4 w-4 mr-2" />
-                          {!event.attendenceQrCode
-                            ? "Generate Attendance QR"
-                            : "AQC Generated"}
-                        </span>
-                      </button>
+                    <div className="flex w-full">
+                      {event?.attendenceQrCode && (
+                        <div className="p-6 border-t border-gray-100">
+                          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                            Attendence QR-Code
+                          </h3>
+                          <div className="bg-white p-2 border border-gray-200 rounded-lg inline-block">
+                            <img
+                              src={event?.attendenceQrCode}
+                              alt="Event QR Code"
+                              className="h-48 w-48 object-contain"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {!event?.attendenceQrCode && (
+                        <div className="p-6 border-t border-gray-100">
+                          <button
+                            className={`w-full rounded-lg py-3 px-4 font-medium text-white transition-colors ${
+                              !qrGenerated
+                                ? "bg-blue-600 hover:bg-blue-700"
+                                : "bg-gray-500"
+                            }`}
+                            onClick={handleGenerateQR}
+                            disabled={
+                              qrGenerated ||
+                              !!event?.attendenceQrCode ||
+                              loading
+                            }
+                          >
+                            <span className="flex items-center justify-center">
+                              <QrCode className="h-4 w-4 mr-2" />
+                              {qrGenerated || event?.attendenceQrCode
+                                ? "AQC Generated"
+                                : loading
+                                  ? "Generating..."
+                                  : "Generate Attendance QR"}
+                            </span>
+                          </button>
+                        </div>
+                      )}{" "}
                     </div>
                   </div>
                 </div>
@@ -414,6 +535,12 @@ export default function Page() {
                         scope="col"
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
+                        User ID
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
                         Email ID
                       </th>
                       <th
@@ -426,12 +553,12 @@ export default function Page() {
                         scope="col"
                         className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
-                        Actions
+                        TimeStamps
                       </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {event.EventSession.map((session, index) => (
+                    {event?.EventSession?.map((session, index) => (
                       <tr key={index} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {index + 1}
@@ -444,15 +571,18 @@ export default function Page() {
                         >
                           {session.id.slice(20, 25)}
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm hover:text-blue-600 hover:underline cursor-pointer select-none font-medium text-gray-900">
+                          {session?.participantId}
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap -tracking-tight text-sm text-gray-700">
                           {session?.participant?.email || "—"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                            ${session?.AttendenceDetails?.locationDetails ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}
+                            className={`px-3 py-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                            ${session?.AttendenceDetails?.isAttended ? "bg-green-200 text-emerald-800" : "bg-red-200 text-red-400"}`}
                           >
-                            {session?.AttendenceDetails?.locationDetails ? (
+                            {session?.AttendenceDetails?.isAttended ? (
                               <p>Attended</p>
                             ) : (
                               <p className="">Registered</p>
@@ -460,7 +590,7 @@ export default function Page() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap -tracking-tight text-sm text-gray-700">
-                          <button className="px-2 py-2 rounded-md bg-gray-700 text-white hover:text-blue-500">Mark Attendance</button>
+                          <p className="text-center">- -</p>
                         </td>
                       </tr>
                     ))}

@@ -1,21 +1,89 @@
 "use client";
 import { useAuth } from "@app/contexts/AuthContext";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 import { useState, useEffect } from "react";
+
+interface EventCardProps {
+  id: string;
+  name: string;
+  venue: string;
+  from: string;
+  to: string;
+  creatorId: string;
+  addQrCode: string;
+  attendenceQrCode: string;
+  participants: string[];
+  EventSession: {
+    id: string;
+    attendenceDetailsId: string;
+    participant?: {
+      id: string;
+      name?: string;
+      email?: string;
+    };
+    AttendenceDetails: {
+      id: string;
+      isAttended: boolean;
+      participantSelfie: string;
+      locationDetailsId: string;
+      locationDetails: {
+        id: string;
+        location?: string;
+      };
+    };
+    participantId?: string;
+    eventId?: string;
+  }[];
+}
 
 export default function ScanSuccess() {
   const { user } = useAuth();
+  const params = useParams();
   const router = useRouter();
   const pathname = usePathname();
   const participantId = user?.id || null;
   const [eventId, setEventId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [event, setEvent] = useState<EventCardProps | null>(null);
+
   useEffect(() => {
     const parts = pathname.split("/");
     const id = parts[parts.length - 1];
     setEventId(id);
   }, [pathname]);
+
+  useEffect(() => {
+    const fetchEventDetails = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/event/get/${params?.id}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch event details");
+        }
+        const data: EventCardProps = await response.json();
+        setEvent(data);
+      } catch (error) {
+        console.error("Error fetching event details:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (params?.id) {
+      fetchEventDetails();
+    }
+  }, []);
+
+  const from = event?.from ? Date.parse(event.from) : 0;
+  const to = event?.to ? Date.parse(event.to) : 0;
+  const now = Date.now();
+
+  const isActive = now >= from && now <= to;
 
   const handleAction = async (action: "accept" | "reject") => {
     setLoading(true);
@@ -65,22 +133,34 @@ export default function ScanSuccess() {
               </p>
               <p className="text-sm text-gray-600">Event ID: {eventId}</p>
             </div>
-            <div className="mt-6 flex justify-center gap-4">
-              <button
-                onClick={() => handleAction("accept")}
-                disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-              >
-                {loading ? "Processing..." : "✅ Accept"}
-              </button>
-              <button
-                onClick={() => handleAction("reject")}
-                disabled={loading}
-                className="px-6 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
-              >
-                {loading ? "Processing..." : "❌ Reject"}
-              </button>
-            </div>
+            {isActive && params?.id && user?.id ? (
+              <div className="mt-6 flex justify-center gap-4">
+                <button
+                  onClick={() => handleAction("accept")}
+                  disabled={loading}
+                  className="px-6 py-2 bg-indigo-400 text-white rounded hover:bg-indigo-500 disabled:opacity-50"
+                >
+                  {loading ? "Processing..." : "✅ Accept"}
+                </button>
+                <button
+                  onClick={() => handleAction("reject")}
+                  disabled={loading}
+                  className="px-6 py-2 bg-gray-700 text-white rounded hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {loading ? "Processing..." : "❌ Reject"}
+                </button>
+              </div>
+            ) : (
+              <div>
+                <p className="text-gray-600 text-center text-sm">
+                  {`Event With `}
+                  <span className="text-gray-700 font-semibold">{`ID: ${event?.id}`}</span>
+                </p>
+                <p className="text-red-400 font-semibold text-center text-lg">
+                  Already Ended!
+                </p>
+              </div>
+            )}
             <p className="mt-5 text-sm text-red-500 font-medium">
               Note: You must be logged in before accepting the invitation
             </p>

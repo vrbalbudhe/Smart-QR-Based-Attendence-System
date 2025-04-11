@@ -25,7 +25,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const router = useRouter();
 
   useEffect(() => {
     CheckLoginStatus();
@@ -56,7 +55,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(userData.user);
       }
     } catch (error) {
-      console.error("Login status check failed:", error);
+      // console.error("Login status check failed:", error);
       setUser(null);
     } finally {
       setLoading(false);

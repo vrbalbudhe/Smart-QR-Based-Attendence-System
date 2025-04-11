@@ -14,6 +14,13 @@ spec:
     spec:
       containers:
         - name: nextjs
-          image: varun029/mynextjsapp:01
+          image: varun029/mynextapp:01
           ports:
             - containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              value: "mongodb+srv://varun:29112002VrB@cluster0.c81dkme.mongodb.net/events-check-in?retryWrites=true&w=majority"
+            - name: NEXT_PUBLIC_QR_SECRET_KEY
+              value: "121ejknnwe9r7489rhejfwanfwio"
+            - name: NEXT_PUBLIC_BASE_URL
+              value: "http://192.168.0.100:3000"

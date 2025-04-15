@@ -29,21 +29,18 @@ export async function POST(req: NextRequest) {
       include: { LocationDetails: true },
     });
 
-    const updatedEvent = await prisma.event.findUnique({
-      where: { id: event?.id },
-      include: { LocationDetails: true },
-    });
+    const updatedEvent = event;
 
-    if (!updatedEvent?.LocationDetails) {
+    if (!event?.LocationDetails) {
       throw new Error("Location details not found after event creation");
     }
-    const qrCodeData = `${process.env.NEXT_PUBLIC_BASE_URL}/scan/${updatedEvent?.id}`;
+    const qrCodeData = `${process.env.NEXT_PUBLIC_BASE_URL || "https://smart-qr-based-attendence-system.vercel.app"}/scan/${event?.id}`;
     const qrImagePath = path.join(process.cwd(), "public/qrcodes");
     if (!fs.existsSync(qrImagePath)) {
       fs.mkdirSync(qrImagePath, { recursive: true });
     }
 
-    const qrFileName = `qr_event_${updatedEvent?.id}.png`;
+    const qrFileName = `qr_event_${event?.id}.png`;
     const qrFilePath = path.join(qrImagePath, qrFileName);
 
     await QRCode.toFile(qrFilePath, qrCodeData, {
@@ -54,12 +51,12 @@ export async function POST(req: NextRequest) {
 
     const qrImageUrl = `/qrcodes/${qrFileName}`;
     await prisma.event.update({
-      where: { id: updatedEvent.id },
+      where: { id: event?.id },
       data: { addQrCode: qrImageUrl },
     });
 
     return NextResponse.json(
-      { ...updatedEvent, qrCodePath: qrImageUrl },
+      { ...event, qrCodePath: qrImageUrl },
       { status: 201 }
     );
   } catch (error) {

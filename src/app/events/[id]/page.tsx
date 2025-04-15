@@ -147,7 +147,7 @@ export default function Page() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-20 h-20 border-4 border-t-blue-600 border-blue-100 rounded-full animate-spin mx-auto"></div>
           <p className="mt-6 text-gray-600 font-medium text-lg">
@@ -161,8 +161,8 @@ export default function Page() {
   if (!event) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center">
-        <div className="bg-white p-10 text-center max-w-md">
-          <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="p-10 text-center max-w-md">
+          <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
             <MapPin className="h-10 w-10 text-red-500" />
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-3">
@@ -444,18 +444,20 @@ export default function Page() {
                         </div>
                       </div>
                     </div>
-                    <div className="p-6 border-t border-gray-100">
-                      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                        Registration QR
-                      </h3>
-                      <div className="bg-white p-2 border border-gray-200 rounded-lg inline-block">
-                        <img
-                          src={event?.addQrCode}
-                          alt="Event QR Code"
-                          className="h-48 w-48 object-contain"
-                        />
+                    {event?.addQrCode && (
+                      <div className="p-6 border-t border-gray-100">
+                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+                          Registration QR
+                        </h3>
+                        <div className="bg-white p-2 border border-gray-200 rounded-lg inline-block">
+                          <img
+                            src={event?.addQrCode}
+                            alt="Event QR Code"
+                            className="h-48 w-48 object-contain"
+                          />
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     <div className="flex w-full">
                       {event?.attendenceQrCode && (
@@ -472,32 +474,33 @@ export default function Page() {
                           </div>
                         </div>
                       )}
-                      {!event?.attendenceQrCode && (
-                        <div className="p-6 border-t border-gray-100">
-                          <button
-                            className={`w-full rounded-lg py-3 px-4 font-medium text-white transition-colors ${
-                              !qrGenerated
-                                ? "bg-blue-600 hover:bg-blue-700"
-                                : "bg-gray-500"
-                            }`}
-                            onClick={handleGenerateQR}
-                            disabled={
-                              qrGenerated ||
-                              !!event?.attendenceQrCode ||
-                              loading
-                            }
-                          >
-                            <span className="flex items-center justify-center">
-                              <QrCode className="h-4 w-4 mr-2" />
-                              {qrGenerated || event?.attendenceQrCode
-                                ? "AQC Generated"
-                                : loading
-                                  ? "Generating..."
-                                  : "Generate Attendance QR"}
-                            </span>
-                          </button>
-                        </div>
-                      )}{" "}
+                      {!event?.attendenceQrCode &&
+                        user?.id === event?.creatorId && (
+                          <div className="p-6 border-t border-gray-100">
+                            <button
+                              className={`w-full rounded-lg py-3 px-4 font-medium text-white transition-colors ${
+                                !qrGenerated
+                                  ? "bg-blue-600 hover:bg-blue-700"
+                                  : "bg-gray-500"
+                              }`}
+                              onClick={handleGenerateQR}
+                              disabled={
+                                qrGenerated ||
+                                !!event?.attendenceQrCode ||
+                                loading
+                              }
+                            >
+                              <span className="flex items-center justify-center">
+                                <QrCode className="h-4 w-4 mr-2" />
+                                {qrGenerated || event?.attendenceQrCode
+                                  ? "AQC Generated"
+                                  : loading
+                                    ? "Generating..."
+                                    : "Generate Attendance QR"}
+                              </span>
+                            </button>
+                          </div>
+                        )}{" "}
                     </div>
                   </div>
                 </div>

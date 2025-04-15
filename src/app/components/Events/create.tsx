@@ -55,7 +55,9 @@ export default function CreateEventForm() {
         body: JSON.stringify(formData),
       });
 
-      if (!response.ok) {
+      if (!response?.ok) {
+        const errorText = await response.text();
+        console.error("API Error Response:", errorText);
         throw new Error("Failed to create event");
       }
 

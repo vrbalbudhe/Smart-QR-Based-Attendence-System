@@ -7,10 +7,9 @@ import path from "path";
 const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const { name, from, to, venue, location, creatorId } = body;
   try {
-    const body = await req.json();
-    const { name, from, to, venue, location, creatorId } = body;
-
     const event = await prisma.event.create({
       data: {
         name,
@@ -31,20 +30,20 @@ export async function POST(req: NextRequest) {
     });
 
     const updatedEvent = await prisma.event.findUnique({
-      where: { id: event.id },
+      where: { id: event?.id },
       include: { LocationDetails: true },
     });
 
     if (!updatedEvent?.LocationDetails) {
       throw new Error("Location details not found after event creation");
     }
-    const qrCodeData = `${process.env.NEXT_PUBLIC_BASE_URL}/scan/${updatedEvent.id}`;
+    const qrCodeData = `${process.env.NEXT_PUBLIC_BASE_URL}/scan/${updatedEvent?.id}`;
     const qrImagePath = path.join(process.cwd(), "public/qrcodes");
     if (!fs.existsSync(qrImagePath)) {
       fs.mkdirSync(qrImagePath, { recursive: true });
     }
 
-    const qrFileName = `qr_event_${updatedEvent.id}.png`;
+    const qrFileName = `qr_event_${updatedEvent?.id}.png`;
     const qrFilePath = path.join(qrImagePath, qrFileName);
 
     await QRCode.toFile(qrFilePath, qrCodeData, {

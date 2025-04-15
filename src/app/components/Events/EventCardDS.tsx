@@ -38,8 +38,8 @@ export default function EventCardDS({
         `/api/event/generateQr/addToEvent?eventId=${id}&participantId=${user?.id}&token=${process.env.NEXT_PUBLIC_QR_SECRET_KEY}`
       );
       const data = await response.json();
-      setQrCode(data.qrCode);
-      if (response.ok) {
+      setQrCode(data?.qrCode);
+      if (response?.ok) {
         setIsGenerating(false);
       }
     } catch (error) {

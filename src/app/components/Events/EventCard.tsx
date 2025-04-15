@@ -29,7 +29,6 @@ export default function EventCard() {
         if (!response.ok) throw new Error("Failed to fetch events");
 
         const data = await response.json();
-        console.log("Fetched events:", data);
         setEvents(data);
       } catch (error) {
         console.error("Error fetching events:", error);

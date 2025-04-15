@@ -32,10 +32,6 @@ export default function RegisterPage() {
     }
 
     try {
-      console.log("Registration Data:", {
-        email: formData.email,
-      });
-
       const response = await fetch("/api/user/register", {
         method: "POST",
         headers: {

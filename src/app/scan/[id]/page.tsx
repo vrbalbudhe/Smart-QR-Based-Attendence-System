@@ -94,7 +94,6 @@ export default function ScanSuccess() {
         { method: "POST" }
       );
       const data = await response.json();
-      console.log(data);
       if (response.ok) {
         setMessage(
           action === "accept"

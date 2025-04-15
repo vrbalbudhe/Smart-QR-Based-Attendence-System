@@ -38,10 +38,6 @@ export default function EventSessionCard({
   participant,
   event,
 }: EventSessionProps) {
-
-  console.log(attendenceDetails)
-  console.log(participant)
-  console.log(event)
   const attendanceStatus = attendenceDetails?.isAttended
     ? "Attended"
     : "Not Attended";

@@ -53,7 +53,6 @@ export default function SessionPage() {
       if (!res.ok) throw new Error("Failed to fetch session data");
 
       const data = await res.json();
-      console.log("Session data:", data[0]);
       setSessionData(data[0]);
     } catch (error) {
       console.error("Error fetching session data:", error);

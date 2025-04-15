@@ -38,7 +38,6 @@ export default function EventCardDS({
         `/api/event/generateQr/addToEvent?eventId=${id}&participantId=${user?.id}&token=${process.env.NEXT_PUBLIC_QR_SECRET_KEY}`
       );
       const data = await response.json();
-      console.log("data ->", data);
       setQrCode(data.qrCode);
       if (response.ok) {
         setIsGenerating(false);

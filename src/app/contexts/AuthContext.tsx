@@ -39,7 +39,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
       if (!response.ok) throw new Error("User not authenticated");
       const data = await response.json();
-      console.log("data in the auth-context: ", data);
 
       if (data?.email) {
         const userResponse = await fetch("/api/user/get", {
@@ -51,7 +50,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!userResponse.ok) throw new Error("Failed to fetch user data");
 
         const userData = await userResponse.json();
-        console.log("this is the userdata :", userData.user);
         setUser(userData.user);
       }
     } catch (error) {

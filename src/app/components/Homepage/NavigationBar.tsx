@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 export default function NavigationBar() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  console.log(user);
 
   return (
     <nav className="bg-[#faf9f9] border-b-2 shadow-md border-gray-300 w-full py-4 fixed px-10 h-16 z-30 flex justify-center items-center">

@@ -44,7 +44,6 @@ const LoginForm: React.FC = () => {
       });
 
       const responseData = await response.json();
-      console.log(responseData);
 
       if (!response.ok) {
         const errorData = await response.json();

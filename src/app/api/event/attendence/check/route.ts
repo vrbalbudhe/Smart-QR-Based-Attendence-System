@@ -5,8 +5,6 @@ const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   const { userId, eventId } = await req.json();
-  console.log("1", userId);
-  console.log("2", eventId);
   try {
     if (!userId || !eventId) {
       return NextResponse.json(

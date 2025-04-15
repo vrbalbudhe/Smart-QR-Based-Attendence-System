@@ -43,7 +43,7 @@ export default function CreateEventForm() {
     e.preventDefault();
 
     try {
-      if (!formData.creatorId) {
+      if (!formData?.creatorId) {
         alert("User not authenticated. Please log in.");
         return;
       }
@@ -54,12 +54,6 @@ export default function CreateEventForm() {
         },
         body: JSON.stringify(formData),
       });
-
-      if (!response?.ok) {
-        const errorText = await response.text();
-        console.error("API Error Response:", errorText);
-        throw new Error("Failed to create event");
-      }
 
       const result = await response.json();
       alert("Event Created Successfully!");

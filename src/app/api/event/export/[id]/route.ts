@@ -8,9 +8,13 @@ const prisma = new PrismaClient();
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  const eventId = params.id;
+  const { id: eventId } = await context.params;
+
+  if (!eventId) {
+    return NextResponse.json({ error: "Missing event ID" }, { status: 400 });
+  }
 
   try {
     const event = await prisma.event.findUnique({

@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
 
     const qrFileName = `qr_event_${event?.id}.png`;
     const qrFilePath = path.join(qrImagePath, qrFileName);
+    console.log(qrFilePath);
 
     await QRCode.toFile(qrFilePath, qrCodeData, {
       type: "png",

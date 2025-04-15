@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     const qrData = `${process.env.NEXT_PUBLIC_BASE_URL}/api/confirmAttendence?eventId=${eventId}&status=attendance`;
 
-    const qrImagePath = path.join(process.cwd(), "public/attendance_qrcodes");
+    const qrImagePath = path.join(process.cwd(), "public/attendanceqrcodes");
     if (!fs.existsSync(qrImagePath)) {
       fs.mkdirSync(qrImagePath, { recursive: true });
     }
@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       margin: 2,
     });
 
-    const qrImageUrl = `/attendance_qrcodes/${qrFileName}`;
+    const qrImageUrl = `/attendanceqrcodes/${qrFileName}`;
     await prisma.event.update({
       where: { id: eventId },
       data: { attendenceQrCode: qrImageUrl },

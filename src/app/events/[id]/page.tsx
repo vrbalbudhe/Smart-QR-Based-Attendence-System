@@ -450,7 +450,7 @@ export default function Page() {
                       </h3>
                       <div className="bg-white p-2 border border-gray-200 rounded-lg inline-block">
                         <img
-                          src={event.addQrCode}
+                          src={event?.addQrCode}
                           alt="Event QR Code"
                           className="h-48 w-48 object-contain"
                         />

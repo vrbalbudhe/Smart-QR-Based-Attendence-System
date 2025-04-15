@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qrcodes-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce # use ReadWriteMany if your storage class supports it
+  resources:
+    requests:
+      storage: 1Gi

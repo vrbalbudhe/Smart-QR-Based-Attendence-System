@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: nextjs-service
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
     app: nextjs
   ports:

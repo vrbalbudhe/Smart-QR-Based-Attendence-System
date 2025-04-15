@@ -60,7 +60,6 @@ export default function CreateEventForm() {
       }
 
       const result = await response.json();
-      console.log("Event Created:", result);
       alert("Event Created Successfully!");
       setFormData({
         name: "",

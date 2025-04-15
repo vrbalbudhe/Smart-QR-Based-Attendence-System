@@ -1,10 +1,8 @@
-// app/api/event/export/[id]/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 import ExcelJS from "exceljs";
 
-export const runtime = "nodejs"; // important
+export const runtime = "nodejs";
 
 const prisma = new PrismaClient();
 
@@ -13,7 +11,6 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   const eventId = params.id;
-  console.log(params.id);
 
   try {
     const event = await prisma.event.findUnique({
@@ -55,7 +52,7 @@ export async function GET(
         email: participant?.email || "N/A",
         attended: AttendenceDetails?.isAttended ? "Yes" : "No",
         location: AttendenceDetails?.locationDetails?.location || "",
-        timeStamp: AttendenceDetails?.locationDetails?.location || "",
+        timeStamp: AttendenceDetails?.locationDetails?.createdAt || "",
       });
     });
 
